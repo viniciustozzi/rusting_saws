@@ -11,8 +11,9 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
-        .add_startup_system(setup_system)
+        .add_startup_system(setup_camera)
         .add_startup_system(setup_saw_spawning)
+        .add_startup_system(setup_player)
         .add_system(spawn_saw_system)
         .add_system(rotate_system)
         .add_system(move_system)
@@ -20,23 +21,24 @@ fn main() {
 }
 
 #[derive(Component)]
-struct Geometry {
+struct Saw {
     direction: Vec2,
 }
 
-impl Geometry {
-    fn new() -> Geometry {
+impl Saw {
+    fn new() -> Saw {
         if rand::random() {
-            Geometry {
+            Saw {
                 direction: Vec2::new(random_dir(), random_dir()),
             }
         } else {
-            Geometry {
+            Saw {
                 direction: Vec2::new(random_dir(), random_dir()),
             }
         }
     }
 }
+
 fn random_dir() -> f32 {
     return thread_rng().gen_range(-1.0..1.0);
 }
@@ -45,9 +47,29 @@ struct SawSpawnConfig {
     timer: Timer,
 }
 
-fn setup_system(mut commands: Commands, windows: ResMut<Windows>) {
+fn setup_camera(mut commands: Commands, windows: ResMut<Windows>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    spawn_saw(commands, windows);
+}
+
+#[derive(Component)]
+struct Player {}
+
+fn setup_player(mut commands: Commands) {
+    let circle = shapes::Circle {
+        radius: 5.0,
+        center: Vec2::ZERO,
+    };
+
+    commands
+        .spawn_bundle(GeometryBuilder::build_as(
+            &circle,
+            DrawMode::Outlined {
+                fill_mode: FillMode::color(Color::GREEN),
+                outline_mode: StrokeMode::new(Color::BLUE, 0.5),
+            },
+            Transform::from_xyz(0.0, 0.0, 0.0),
+        ))
+        .insert(Player {});
 }
 
 fn setup_saw_spawning(mut commands: Commands) {
@@ -69,13 +91,13 @@ fn spawn_saw_system(
     }
 }
 
-fn rotate_system(mut geometry: Query<(&mut Transform, &Geometry)>) {
+fn rotate_system(mut geometry: Query<(&mut Transform, &Saw)>) {
     for (mut t, _g) in geometry.iter_mut() {
         t.rotation *= Quat::from_rotation_z(3.0);
     }
 }
 
-fn move_system(mut geometry: Query<(&mut Transform, &Geometry)>) {
+fn move_system(mut geometry: Query<(&mut Transform, &Saw)>) {
     for (mut t, g) in geometry.iter_mut() {
         t.translation.x += 2.0 * g.direction.x;
         t.translation.y += 2.0 * g.direction.y;
@@ -98,9 +120,9 @@ fn spawn_saw(mut commands: Commands, mut windows: ResMut<Windows>) {
             &shape,
             DrawMode::Outlined {
                 fill_mode: FillMode::color(Color::BLUE),
-                outline_mode: StrokeMode::new(Color::BLACK, 6.0),
+                outline_mode: StrokeMode::new(Color::RED, 6.0),
             },
             Transform::from_xyz(x, y, 0.0),
         ))
-        .insert(Geometry::new());
+        .insert(Saw::new());
 }
