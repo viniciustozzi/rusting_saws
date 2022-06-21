@@ -15,28 +15,34 @@ fn main() {
         .add_startup_system(setup_saw_spawning)
         .add_startup_system(setup_player)
         .add_system(spawn_saw_system)
-        .add_system(rotate_system)
-        .add_system(move_system)
+        .add_system(saw_rotate_system)
+        .add_system(saw_move_system)
         .run();
 }
 
 #[derive(Component)]
 struct Saw {
-    direction: Vec2,
+    dir: Vec2,
 }
 
 impl Saw {
     fn new() -> Saw {
         if rand::random() {
             Saw {
-                direction: Vec2::new(random_dir(), random_dir()),
+                dir: Vec2::new(random_dir(), random_dir()),
             }
         } else {
             Saw {
-                direction: Vec2::new(random_dir(), random_dir()),
+                dir: Vec2::new(random_dir(), random_dir()),
             }
         }
     }
+}
+
+#[derive(Component)]
+struct Player {
+    health: i32,
+    dir: Vec2,
 }
 
 fn random_dir() -> f32 {
@@ -51,25 +57,32 @@ fn setup_camera(mut commands: Commands, windows: ResMut<Windows>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-#[derive(Component)]
-struct Player {}
-
 fn setup_player(mut commands: Commands) {
-    let circle = shapes::Circle {
+    let circle_shape = shapes::Circle {
         radius: 5.0,
         center: Vec2::ZERO,
     };
 
     commands
         .spawn_bundle(GeometryBuilder::build_as(
-            &circle,
+            &circle_shape,
             DrawMode::Outlined {
                 fill_mode: FillMode::color(Color::GREEN),
                 outline_mode: StrokeMode::new(Color::BLUE, 0.5),
             },
             Transform::from_xyz(0.0, 0.0, 0.0),
         ))
-        .insert(Player {});
+        .insert(Player {
+            health: 3,
+            dir: Vec2::new(0.0, 0.0),
+        });
+}
+
+fn player_movment(mut player: Query<(&mut Transform, &Player)>, keys: Res<Input<KeyCode>>) {
+    if keys.just_pressed(KeyCode::A) {
+        for (mut t, p) in player.iter_mut() {
+        }
+    }
 }
 
 fn setup_saw_spawning(mut commands: Commands) {
@@ -91,16 +104,16 @@ fn spawn_saw_system(
     }
 }
 
-fn rotate_system(mut geometry: Query<(&mut Transform, &Saw)>) {
-    for (mut t, _g) in geometry.iter_mut() {
+fn saw_rotate_system(mut geometry: Query<(&mut Transform, &Saw)>) {
+    for (mut t, _s) in geometry.iter_mut() {
         t.rotation *= Quat::from_rotation_z(3.0);
     }
 }
 
-fn move_system(mut geometry: Query<(&mut Transform, &Saw)>) {
-    for (mut t, g) in geometry.iter_mut() {
-        t.translation.x += 2.0 * g.direction.x;
-        t.translation.y += 2.0 * g.direction.y;
+fn saw_move_system(mut geometry: Query<(&mut Transform, &Saw)>) {
+    for (mut t, s) in geometry.iter_mut() {
+        t.translation.x += 2.0 * s.dir.x;
+        t.translation.y += 2.0 * s.dir.y;
     }
 }
 
