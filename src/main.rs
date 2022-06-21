@@ -8,6 +8,7 @@ use std::time::Duration;
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
+        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
         .add_startup_system(setup_system)
@@ -51,7 +52,7 @@ fn setup_system(mut commands: Commands, windows: ResMut<Windows>) {
 
 fn setup_saw_spawning(mut commands: Commands) {
     commands.insert_resource(SawSpawnConfig {
-        timer: Timer::new(Duration::from_secs(1), true),
+        timer: Timer::new(Duration::from_secs_f32(0.5), true),
     })
 }
 
@@ -76,28 +77,28 @@ fn rotate_system(mut geometry: Query<(&mut Transform, &Geometry)>) {
 
 fn move_system(mut geometry: Query<(&mut Transform, &Geometry)>) {
     for (mut t, g) in geometry.iter_mut() {
-        t.translation.x += 1.0 * g.direction.x;
-        t.translation.y += 1.0 * g.direction.y;
+        t.translation.x += 2.0 * g.direction.x;
+        t.translation.y += 2.0 * g.direction.y;
     }
 }
 
 fn spawn_saw(mut commands: Commands, mut windows: ResMut<Windows>) {
     let shape = shapes::RegularPolygon {
         sides: 6,
-        feature: shapes::RegularPolygonFeature::Radius(50.0),
+        feature: shapes::RegularPolygonFeature::Radius(60.0),
         ..shapes::RegularPolygon::default()
     };
 
     let window = windows.get_primary_mut().unwrap();
-    let x = thread_rng().gen_range(0.0..window.width());
-    let y = thread_rng().gen_range(0.0..window.height());
+    let x = thread_rng().gen_range(-window.width()..window.width());
+    let y = thread_rng().gen_range(-window.height()..window.height());
 
     commands
         .spawn_bundle(GeometryBuilder::build_as(
             &shape,
             DrawMode::Outlined {
                 fill_mode: FillMode::color(Color::BLUE),
-                outline_mode: StrokeMode::new(Color::BLACK, 5.0),
+                outline_mode: StrokeMode::new(Color::BLACK, 6.0),
             },
             Transform::from_xyz(x, y, 0.0),
         ))
