@@ -17,6 +17,7 @@ fn main() {
         .add_system(spawn_saw_system)
         .add_system(saw_rotate_system)
         .add_system(saw_move_system)
+        .add_system(player_movment)
         .run();
 }
 
@@ -78,10 +79,26 @@ fn setup_player(mut commands: Commands) {
         });
 }
 
-fn player_movment(mut player: Query<(&mut Transform, &Player)>, keys: Res<Input<KeyCode>>) {
-    if keys.just_pressed(KeyCode::A) {
-        for (mut t, p) in player.iter_mut() {
+fn player_movment(mut player: Query<(&mut Transform, &mut Player)>, keys: Res<Input<KeyCode>>) {
+    for (mut t, mut p) in player.iter_mut() {
+        if keys.pressed(KeyCode::A) {
+            p.dir = Vec2::new(-1.0, p.dir.y)
+        } else if keys.pressed(KeyCode::D) {
+            p.dir = Vec2::new(1.0, p.dir.y)
+        } else {
+            p.dir = Vec2::new(0.0, p.dir.y)
         }
+
+        if keys.pressed(KeyCode::W) {
+            p.dir = Vec2::new(p.dir.x, 1.0)
+        } else if keys.pressed(KeyCode::S) {
+            p.dir = Vec2::new(p.dir.x, -1.0)
+        } else {
+            p.dir = Vec2::new(p.dir.x, 0.0)
+        }
+
+        let speed = 3.0;
+        t.translation += Vec3::new(speed * p.dir.x, speed * p.dir.y, 0.0);
     }
 }
 
