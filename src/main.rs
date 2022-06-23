@@ -46,6 +46,11 @@ struct Player {
     dir: Vec2,
 }
 
+#[derive(Component)]
+struct Collision {
+    radius: f64,
+}
+
 fn random_dir() -> f32 {
     return thread_rng().gen_range(-1.0..1.0);
 }
@@ -76,7 +81,8 @@ fn setup_player(mut commands: Commands) {
         .insert(Player {
             health: 3,
             dir: Vec2::new(0.0, 0.0),
-        });
+        })
+        .insert(Collision { radius: 5.0 });
 }
 
 fn player_movment(mut player: Query<(&mut Transform, &mut Player)>, keys: Res<Input<KeyCode>>) {
@@ -100,6 +106,10 @@ fn player_movment(mut player: Query<(&mut Transform, &mut Player)>, keys: Res<In
         let speed = 3.0;
         t.translation += Vec3::new(speed * p.dir.x, speed * p.dir.y, 0.0);
     }
+}
+
+fn circle_collision() -> bool {
+    true
 }
 
 fn setup_saw_spawning(mut commands: Commands) {
@@ -154,5 +164,13 @@ fn spawn_saw(mut commands: Commands, mut windows: ResMut<Windows>) {
             },
             Transform::from_xyz(x, y, 0.0),
         ))
-        .insert(Saw::new());
+        .insert(Saw::new())
+        .insert(Collision { radius: 60.0 });
 }
+
+// func collides(c1, c2 *circle_collision) bool {
+// 	dist := math.Sqrt(math.Pow(c2.center.x-c1.center.x, 2) +
+// 		math.Pow(c2.center.y-c1.center.y, 2))
+
+// 	return dist <= c1.radius+c2.radius
+// }
